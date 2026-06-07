@@ -110,6 +110,7 @@ function lintMirandaCode(code) {
             failed.push(...issues);
         }
     }
+    console.log('Problemas encontrados:', failed);
     return {
         passed,
         failed

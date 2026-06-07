@@ -68,8 +68,8 @@ double x =
     });
     test("Debe detectar duplicate-definition", () => {
         const code = `
-square x = x * x
-square n = n ^ 2
+double x = x * 2
+double x = x + x
 `;
         const results = (0, mirandaLinter_1.lintMirandaCode)(code);
         assert.ok(results.failed.some((r) => r.rule === "duplicate-definition"), "Debería detectar definiciones duplicadas");

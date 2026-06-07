@@ -116,7 +116,61 @@ var unbalancedParenthesesRule = {
 var unclosedDelimitersRule = {
   name: "unclosed-delimiters",
   check(code, config) {
-    return [];
+    const issues = [];
+    const lines = code.split("\n");
+    const stack = [];
+    const delimiters = {
+      "[": "]",
+      "{": "}"
+    };
+    const closingDelimiters = {
+      "]": "[",
+      "}": "{"
+    };
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      for (let j = 0; j < line.length; j++) {
+        const char = line[j];
+        if (char === "[" || char === "{") {
+          stack.push({ type: char, line: i + 1, column: j + 1 });
+        } else if (char === "]" || char === "}") {
+          if (stack.length === 0) {
+            issues.push({
+              rule: "unclosed-delimiters",
+              message: `Delimitador de cierre '${char}' sin apertura correspondiente.`,
+              line: i + 1,
+              column: j + 1,
+              severity: "error"
+            });
+          } else {
+            const last = stack[stack.length - 1];
+            const expectedClosing = delimiters[last.type];
+            if (char === expectedClosing) {
+              stack.pop();
+            } else {
+              issues.push({
+                rule: "unclosed-delimiters",
+                message: `Delimitador incorrecto. Se esperaba '${expectedClosing}' pero se encontr\xF3 '${char}'. Delimitador de apertura '${last.type}' en l\xEDnea ${last.line}, columna ${last.column}.`,
+                line: i + 1,
+                column: j + 1,
+                severity: "error"
+              });
+            }
+          }
+        }
+      }
+    }
+    for (const unclosed of stack) {
+      const closing = delimiters[unclosed.type];
+      issues.push({
+        rule: "unclosed-delimiters",
+        message: `Delimitador de apertura '${unclosed.type}' sin cierre correspondiente. Se esperaba '${closing}'. Abierto en l\xEDnea ${unclosed.line}, columna ${unclosed.column}.`,
+        line: unclosed.line,
+        column: unclosed.column,
+        severity: "error"
+      });
+    }
+    return issues;
   }
 };
 
@@ -165,7 +219,7 @@ var duplicateDefinitionRule = {
   name: "duplicate-definition",
   check(code, config) {
     const issues = [];
-    const definedFunctions = /* @__PURE__ */ new Map();
+    const definedPatterns = /* @__PURE__ */ new Map();
     const lines = code.split("\n");
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
@@ -177,22 +231,24 @@ var duplicateDefinitionRule = {
       if (leadingSpaces > 0) {
         continue;
       }
-      const definitionMatch = trimmedLine.match(/^([a-zA-Z_]\w*)\s+/);
-      if (definitionMatch && trimmedLine.includes("=")) {
-        const functionName = definitionMatch[1];
-        if (!definedFunctions.has(functionName)) {
-          definedFunctions.set(functionName, [i + 1]);
-        } else {
-          definedFunctions.get(functionName).push(i + 1);
+      const equalsIndex = trimmedLine.indexOf("=");
+      if (equalsIndex !== -1) {
+        const pattern = trimmedLine.substring(0, equalsIndex).trim();
+        if (/^[a-zA-Z_]\w*/.test(pattern)) {
+          if (!definedPatterns.has(pattern)) {
+            definedPatterns.set(pattern, [i + 1]);
+          } else {
+            definedPatterns.get(pattern).push(i + 1);
+          }
         }
       }
     }
-    for (const [functionName, lineNumbers] of definedFunctions.entries()) {
+    for (const [pattern, lineNumbers] of definedPatterns.entries()) {
       if (lineNumbers.length > 1) {
         for (let j = 1; j < lineNumbers.length; j++) {
           issues.push({
             rule: "duplicate-definition",
-            message: `Definici\xF3n duplicada de '${functionName}'. Primera definici\xF3n en l\xEDnea ${lineNumbers[0]}.`,
+            message: `Definici\xF3n duplicada del patr\xF3n '${pattern}'. Primera definici\xF3n en l\xEDnea ${lineNumbers[0]}.`,
             line: lineNumbers[j],
             column: 0,
             severity: "error"
@@ -205,18 +261,293 @@ var duplicateDefinitionRule = {
 };
 
 // src/rules/UndefinedVariableRule.ts
+var RESERVED_KEYWORDS = /* @__PURE__ */ new Set([
+  "if",
+  "then",
+  "else",
+  "where",
+  "let",
+  "in",
+  "otherwise",
+  "and",
+  "or",
+  "not",
+  "div",
+  "mod",
+  "rem",
+  "abs",
+  "min",
+  "max"
+]);
+var BUILTIN_FUNCTIONS = /* @__PURE__ */ new Set([
+  "abs",
+  "sign",
+  "min",
+  "max",
+  "gcd",
+  "lcm",
+  "length",
+  "head",
+  "tail",
+  "reverse",
+  "sort",
+  "append",
+  "take",
+  "drop",
+  "map",
+  "filter",
+  "foldl",
+  "foldr",
+  "zip",
+  "unzip",
+  "strlen",
+  "substr",
+  "concat",
+  "chars",
+  "ord",
+  "chr",
+  "print",
+  "println",
+  "read",
+  "readln",
+  "show",
+  "hd",
+  "tl",
+  "null",
+  "not",
+  "even",
+  "odd",
+  "isalpha",
+  "isdigit",
+  "compose",
+  "flip",
+  "curry",
+  "uncurry",
+  "div",
+  "mod",
+  "rem",
+  "pow",
+  "sqrt",
+  "exp",
+  "log",
+  "sin",
+  "cos",
+  "tan",
+  "id",
+  "const",
+  "fst",
+  "snd",
+  "error",
+  "undefined"
+]);
 var undefinedVariableRule = {
   name: "undefined-variable",
   check(code, config) {
-    return [];
+    const issues = [];
+    const lines = code.split("\n");
+    const definedFunctions = /* @__PURE__ */ new Set();
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("//")) {
+        continue;
+      }
+      if (line.match(/^ /)) {
+        continue;
+      }
+      const defMatch = trimmed.match(/^([a-zA-Z_]\w*)\s*/);
+      if (defMatch && trimmed.includes("=")) {
+        definedFunctions.add(defMatch[1]);
+      }
+    }
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("//")) {
+        continue;
+      }
+      const definitionMatch = trimmed.match(/^([a-zA-Z_]\w*)\s+(.*?)\s*=\s*(.*)/);
+      if (definitionMatch) {
+        const functionName = definitionMatch[1];
+        const paramsString = definitionMatch[2];
+        const expression = definitionMatch[3];
+        const parameters = /* @__PURE__ */ new Set();
+        parameters.add(functionName);
+        const paramTokens = paramsString.split(/\s+/).filter((p) => p.length > 0);
+        for (const param of paramTokens) {
+          if (/^[a-zA-Z_]\w*$/.test(param)) {
+            parameters.add(param);
+          }
+        }
+        const identifierRegex = /\b([a-zA-Z_]\w*)\b/g;
+        let match;
+        const reportedInLine = /* @__PURE__ */ new Set();
+        while ((match = identifierRegex.exec(expression)) !== null) {
+          const identifier = match[1];
+          if (reportedInLine.has(identifier)) {
+            continue;
+          }
+          if (RESERVED_KEYWORDS.has(identifier)) {
+            continue;
+          }
+          if (parameters.has(identifier)) {
+            continue;
+          }
+          if (definedFunctions.has(identifier)) {
+            continue;
+          }
+          if (BUILTIN_FUNCTIONS.has(identifier)) {
+            continue;
+          }
+          if (/^\d+$/.test(identifier)) {
+            continue;
+          }
+          const columnNumber = line.indexOf(identifier) + 1;
+          issues.push({
+            rule: "undefined-variable",
+            message: `Variable no definida '${identifier}'. Debe ser un par\xE1metro o estar definida en 'where'.`,
+            line: i + 1,
+            column: columnNumber,
+            severity: "error"
+          });
+          reportedInLine.add(identifier);
+        }
+      }
+    }
+    return issues;
   }
 };
 
 // src/rules/UndefinedFunctionRule.ts
+var BUILTIN_FUNCTIONS2 = /* @__PURE__ */ new Set([
+  // Funciones aritméticas
+  "abs",
+  "sign",
+  "min",
+  "max",
+  "gcd",
+  "lcm",
+  // Funciones de listas
+  "length",
+  "head",
+  "tail",
+  "reverse",
+  "sort",
+  "append",
+  "take",
+  "drop",
+  "map",
+  "filter",
+  "foldl",
+  "foldr",
+  "zip",
+  "unzip",
+  // Funciones de strings
+  "strlen",
+  "substr",
+  "concat",
+  "chars",
+  "ord",
+  "chr",
+  // Funciones de entrada/salida
+  "print",
+  "println",
+  "read",
+  "readln",
+  "show",
+  "hd",
+  "tl",
+  // Funciones de tipo
+  "null",
+  "not",
+  "even",
+  "odd",
+  "isalpha",
+  "isdigit",
+  // Funciones de orden superior
+  "compose",
+  "flip",
+  "curry",
+  "uncurry",
+  // Operadores comunes representados como funciones
+  "div",
+  "mod",
+  "rem",
+  "pow",
+  "sqrt",
+  "exp",
+  "log",
+  "sin",
+  "cos",
+  "tan",
+  // Más funciones built-in
+  "id",
+  "const",
+  "fst",
+  "snd",
+  "error",
+  "undefined"
+]);
 var undefinedFunctionRule = {
   name: "undefined-function",
   check(code, config) {
-    return [];
+    const issues = [];
+    const lines = code.split("\n");
+    const definedFunctions = /* @__PURE__ */ new Set();
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("//")) {
+        continue;
+      }
+      if (line.match(/^ /)) {
+        continue;
+      }
+      const definitionMatch = trimmed.match(/^([a-zA-Z_]\w*)\s*/);
+      if (definitionMatch && trimmed.includes("=")) {
+        definedFunctions.add(definitionMatch[1]);
+      }
+    }
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("//")) {
+        continue;
+      }
+      const identifierRegex = /\b([a-zA-Z_]\w*)\b/g;
+      let match;
+      while ((match = identifierRegex.exec(trimmed)) !== null) {
+        const identifier = match[1];
+        const position = match.index;
+        if (["if", "then", "else", "where", "let", "in", "otherwise"].includes(identifier)) {
+          continue;
+        }
+        if (["and", "or", "not", "div", "mod", "rem"].includes(identifier)) {
+          continue;
+        }
+        const beforeIdentifier = trimmed.substring(0, position);
+        if (beforeIdentifier.includes("=")) {
+        } else {
+          continue;
+        }
+        if (!definedFunctions.has(identifier) && !BUILTIN_FUNCTIONS2.has(identifier)) {
+          const defMatch = trimmed.match(/^([a-zA-Z_]\w*)\s+([a-zA-Z_]\w*[\s\w]*)\s*=/);
+          if (defMatch) {
+            const params = defMatch[2].split(/\s+/);
+            if (params.includes(identifier)) {
+              continue;
+            }
+          }
+          const columnNumber = line.indexOf(identifier) + 1;
+          issues.push({
+            rule: "undefined-function",
+            message: `Funci\xF3n no definida '${identifier}'.`,
+            line: i + 1,
+            column: columnNumber,
+            severity: "error"
+          });
+        }
+      }
+    }
+    return issues;
   }
 };
 
@@ -275,6 +606,7 @@ function lintMirandaCode(code) {
       failed.push(...issues);
     }
   }
+  console.log("Problemas encontrados:", failed);
   return {
     passed,
     failed

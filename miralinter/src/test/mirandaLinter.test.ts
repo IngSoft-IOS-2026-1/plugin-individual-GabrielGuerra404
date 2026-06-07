@@ -56,19 +56,19 @@ double x =
 		);
 	});
 
-	test("Debe detectar duplicate-definition", () => {
-		const code = `
-square x = x * x
-square n = n ^ 2
+test("Debe detectar duplicate-definition", () => {
+	const code = `
+double x = x * 2
+double x = x + x
 `;
 
-		const results = lintMirandaCode(code);
+	const results = lintMirandaCode(code);
 
-		assert.ok(
-			results.failed.some((r) => r.rule === "duplicate-definition"),
-			"Debería detectar definiciones duplicadas",
-		);
-	});
+	assert.ok(
+		results.failed.some((r) => r.rule === "duplicate-definition"),
+		"Debería detectar definiciones duplicadas",
+	);
+});
 
 	test("Debe detectar undefined-variable", () => {
 		const code = `

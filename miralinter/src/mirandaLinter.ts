@@ -89,6 +89,8 @@ export function lintMirandaCode(code: string): LintResults {
         }
     }
 
+    //console.log('Problemas encontrados:', failed);
+
     return {
         passed,
         failed

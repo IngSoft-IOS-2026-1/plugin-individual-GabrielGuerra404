@@ -5,7 +5,8 @@ exports.duplicateDefinitionRule = {
     name: 'duplicate-definition',
     check(code, config) {
         const issues = [];
-        const definedFunctions = new Map();
+        // Almacenar las definiciones con su patrón completo (nombre + parámetros)
+        const definedPatterns = new Map();
         const lines = code.split('\n');
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
@@ -15,35 +16,36 @@ exports.duplicateDefinitionRule = {
                 continue;
             }
             // Solo procesar líneas que no estén indentadas (definiciones de nivel superior)
-            // Las líneas indentadas son continuaciones de definiciones anteriores
             const leadingSpaces = line.match(/^ */)?.[0].length || 0;
             if (leadingSpaces > 0) {
                 continue;
             }
-            // Detectar patrón de definición en Miranda: "nombre args = ..."
-            // El nombre debe ser un identificador válido (inicia con letra o _)
-            const definitionMatch = trimmedLine.match(/^([a-zA-Z_]\w*)\s+/);
-            // Verificar que contiene el símbolo '=' para confirmar que es una definición
-            if (definitionMatch && trimmedLine.includes('=')) {
-                const functionName = definitionMatch[1];
-                if (!definedFunctions.has(functionName)) {
-                    definedFunctions.set(functionName, [i + 1]);
-                }
-                else {
-                    // Agregar línea de definición adicional
-                    definedFunctions.get(functionName).push(i + 1);
+            // Detectar patrón de definición: "nombre args = ..."
+            // Extraer todo antes del '=' como el patrón
+            const equalsIndex = trimmedLine.indexOf('=');
+            if (equalsIndex !== -1) {
+                const pattern = trimmedLine.substring(0, equalsIndex).trim();
+                // Verificar que es una definición válida (empieza con identificador)
+                if (/^[a-zA-Z_]\w*/.test(pattern)) {
+                    if (!definedPatterns.has(pattern)) {
+                        definedPatterns.set(pattern, [i + 1]);
+                    }
+                    else {
+                        // Agregar línea de definición con el mismo patrón
+                        definedPatterns.get(pattern).push(i + 1);
+                    }
                 }
             }
         }
-        // Generar issues para funciones que tienen múltiples definiciones
-        for (const [functionName, lineNumbers] of definedFunctions.entries()) {
-            // Si la función aparece en múltiples líneas de definición,
+        // Generar issues solo para patrones duplicados exactos
+        for (const [pattern, lineNumbers] of definedPatterns.entries()) {
+            // Si el mismo patrón exacto aparece en múltiples líneas,
             // marcar todas excepto la primera como duplicadas
             if (lineNumbers.length > 1) {
                 for (let j = 1; j < lineNumbers.length; j++) {
                     issues.push({
                         rule: 'duplicate-definition',
-                        message: `Definición duplicada de '${functionName}'. Primera definición en línea ${lineNumbers[0]}.`,
+                        message: `Definición duplicada del patrón '${pattern}'. Primera definición en línea ${lineNumbers[0]}.`,
                         line: lineNumbers[j],
                         column: 0,
                         severity: 'error'
