@@ -1,71 +1,168 @@
-# miralinter README
+# Miranda Linter (miralinter)
 
-This is the README for your extension "miralinter". After writing up a brief description, we recommend including the following sections.
+Una extensión con múltiples funcionalidades de ESLint para el lenguaje de programación Miranda. Detecta errores comunes de sintaxis y código.
 
-## Features
+## Características
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+- **7 reglas de linting** para validar código Miranda
+- **Configuración personalizable** mediante `miralinter.config.json`
+- **Detección de errores** ejecutando el comando miralinter 
+- **Pattern matching support** (definiciones con múltiples cláusulas)
+- **Parámetros configurables** por regla
 
-For example if there is an image subfolder under your extension project workspace:
+## Configuración
 
-\!\[feature X\]\(images/feature-x.png\)
+El linter se configura mediante el archivo `miralinter.config.json` en la raíz del proyecto.
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+### Ejemplo de configuración
 
-## Requirements
+```json
+{
+  "rules": {
+    "bad-identation": {
+      "enabled": true,
+      "indentationSpaces": 4
+    },
+    "unbalanced-parentheses": {
+      "enabled": true
+    },
+    "unclosed-delimiters": {
+      "enabled": true
+    },
+    "incomplete-definition": {
+      "enabled": true
+    },
+    "duplicate-definition": {
+      "enabled": true
+    },
+    "undefined-variable": {
+      "enabled": true
+    },
+    "undefined-function": {
+      "enabled": true
+    }
+  }
+}
+```
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+### Deshabilitar/Habilitar una regla
+Para deshabilitar una regla hay que establecer el valor de `enabled` en **false**
+Para activar una regla hay que establecer el valor de `enabled` en **true**
 
-## Extension Settings
+#### Regla activada
+```json
+{
+  "rules": {
+    "undefined-variable": {
+      "enabled": true
+    }
+  }
+}
+```
+#### Regla desactivada
+```json
+{
+  "rules": {
+    "undefined-variable": {
+      "enabled": false
+    }
+  }
+}
+```
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+## Reglas disponibles
 
-For example:
+### bad-identation
 
-This extension contributes the following settings:
+Detecta indentación incorrecta que no es múltiplo del número de espacios esperado.
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+- **Severidad**: warning
+- **Parámetro**: `indentationSpaces` (default: 4)
 
-## Known Issues
+**Ejemplo:**
+```miranda
+f x =
+  x + 1      // ✗ Error: 2 espacios, se esperan múltiplos de 4
+    + 2      // ✓ Válido: 4 espacios
+```
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+### unbalanced-parentheses
 
-## Release Notes
+Detecta paréntesis desbalanceados o sin cerrar.
 
-Users appreciate release notes as you update your extension.
+- **Severidad**: error
 
-### 1.0.0
+**Ejemplo:**
+```miranda
+f x = (x + 1   // ✗ Error: paréntesis sin cerrar
+f x = (x + 1)  // ✓ Válido
+```
 
-Initial release of ...
+### unclosed-delimiters
 
-### 1.0.1
+Detecta corchetes `[]` y llaves `{}` sin cerrar.
 
-Fixed issue #.
+- **Severidad**: error
 
-### 1.1.0
+**Ejemplo:**
+```miranda
+nums = [1,2,3     // ✗ Error: corchete sin cerrar
+nums = [1,2,3]    // ✓ Válido
+```
 
-Added features X, Y, and Z.
+### incomplete-definition
 
----
+Detecta definiciones de función incompletas sin expresión.
 
-## Following extension guidelines
+- **Severidad**: error
 
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
+**Ejemplo:**
+```miranda
+double x =       // ✗ Error: falta expresión
+double x = 2 * x // ✓ Válido
+```
 
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
+### duplicate-definition
 
-## Working with Markdown
+Detecta definiciones duplicadas con el mismo patrón exacto.
 
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
+- **Severidad**: error
 
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
+**Nota**: Las definiciones con parámetros diferentes son válidas (pattern matching).
 
-## For more information
+**Ejemplo:**
+```miranda
+square x = x * x    // ✓ Válido
+square n = n ^ 2    // ✓ Válido (parámetros diferentes)
 
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
+fact 0 = 1
+fact 0 = 2          // ✗ Error: mismo patrón "fact 0"
+```
 
-**Enjoy!**
+### undefined-variable
+
+Detecta variables no definidas en una expresión.
+
+- **Severidad**: error
+
+**Ejemplo:**
+```miranda
+f x = x + y    // ✗ Error: y no definida
+f x = x + 1    // ✓ Válido
+```
+
+### undefined-function
+
+Detecta llamadas a funciones no definidas.
+
+- **Severidad**: error
+
+**Ejemplo:**
+```miranda
+main = factorial 5    // ✗ Error: factorial no definida
+fact n = n * fact (n - 1)
+main = fact 5         // ✓ Válido
+```
+
+## Contribuciones
+Para reportar bugs, contribuir o descargar el proyecto, leer el documento de CONTRIBUTING.md

@@ -3,6 +3,8 @@
   "displayName": "Simple Miranda ESLint",
   "description": "Provides basic ESLint functionality for Miranda code.",
   "version": "0.0.1",
+  "license": "MIT",
+  "publisher": "GabrielGuerra",
   "engines": {
     "vscode": "^1.120.0"
   },
