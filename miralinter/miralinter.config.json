@@ -1,0 +1,26 @@
+{
+  "rules": {
+    "bad-identation": {
+      "enabled": true,
+      "indentationSpaces": 4
+    },
+    "unbalanced-parentheses": {
+      "enabled": true
+    },
+    "unclosed-delimiters": {
+      "enabled": true
+    },
+    "incomplete-definition": {
+      "enabled": true
+    },
+    "duplicate-definition": {
+      "enabled": true
+    },
+    "undefined-variable": {
+      "enabled": true
+    },
+    "undefined-function": {
+      "enabled": true
+    }
+  }
+}

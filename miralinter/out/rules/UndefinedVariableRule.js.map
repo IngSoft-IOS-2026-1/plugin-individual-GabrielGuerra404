@@ -1,0 +1,1 @@
+{"version":3,"file":"UndefinedVariableRule.js","sourceRoot":"","sources":["../../src/rules/UndefinedVariableRule.ts"],"names":[],"mappings":";;;AAIa,QAAA,qBAAqB,GAAa;IAC3C,IAAI,EAAE,oBAAoB;IAC1B,KAAK,CAAC,IAAY,EAAE,MAAmB;QACnC,OAAO,EAAE,CAAC;IACd,CAAC;CACJ,CAAC"}
