@@ -10,48 +10,6 @@ Una extensión con múltiples funcionalidades de ESLint para el lenguaje de prog
 - **Pattern matching support** (definiciones con múltiples cláusulas)
 - **Parámetros configurables** por regla
 
-## Implemented rules
-
-### Como extensión de VS Code
-
-1. Clona este repositorio
-2. Navega a la carpeta `miralinter`
-3. Instala las dependencias:
-   ```bash
-   npm install
-   ```
-4. Compila el proyecto:
-   ```bash
-   npm run compile
-   ```
-5. Empaqueta la extensión:
-   ```bash
-   vsce package
-   ```
-6. Instala el archivo `.vsix` generado en VS Code
-
-### Desarrollo local
-
-```bash
-cd miralinter
-npm install
-npm run build
-```
-
-## 🚀 Uso
-
-### Ejecutar el linter
-
-```bash
-npm run lint
-```
-
-### Correr los tests
-
-```bash
-npm run test
-```
-
 ## Configuración
 
 El linter se configura mediante el archivo `miralinter.config.json` en la raíz del proyecto.
@@ -206,20 +164,5 @@ fact n = n * fact (n - 1)
 main = fact 5         // ✓ Válido
 ```
 
-## 📖 Documentación detallada
-
-Para más información sobre la configuración, consulta [CONFIGURACION.md](./CONFIGURACION.md)
-
-## 🧪 Testing
-
-El proyecto incluye tests completos para todas las reglas:
-
-```bash
-npm run test
-```
-
-
-
-
 ## Contribuciones
-Para reportar bugs o contribuir, leer el documento de CONTRIBUTING.md
+Para reportar bugs, contribuir o descargar el proyecto, leer el documento de CONTRIBUTING.md
