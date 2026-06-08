@@ -6,7 +6,7 @@ Una extensión con múltiples funcionalidades de ESLint para el lenguaje de prog
 
 - **7 reglas de linting** para validar código Miranda
 - **Configuración personalizable** mediante `miralinter.config.json`
-- **Detección de errores** ejecutando el comando miralinter 
+- **Detección de errores** ejecutando el comando `miralinter lintCode`
 - **Pattern matching support** (definiciones con múltiples cláusulas)
 - **Parámetros configurables** por regla
 
