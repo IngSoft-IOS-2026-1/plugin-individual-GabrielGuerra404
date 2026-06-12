@@ -20,7 +20,7 @@
         "title": "Hello World"
       },
       {
-        "command": "miralinter.lint",
+        "command": "miralinter.lintCode",
         "title": "Lint Miranda Code"
       }
     ]

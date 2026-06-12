@@ -1,16 +1,661 @@
-"use strict";var P=Object.create;var b=Object.defineProperty;var T=Object.getOwnPropertyDescriptor;var W=Object.getOwnPropertyNames;var O=Object.getPrototypeOf,j=Object.prototype.hasOwnProperty;var q=(i,l)=>{for(var s in l)b(i,s,{get:l[s],enumerable:!0})},C=(i,l,s,r)=>{if(l&&typeof l=="object"||typeof l=="function")for(let t of W(l))!j.call(i,t)&&t!==s&&b(i,t,{get:()=>l[t],enumerable:!(r=T(l,t))||r.enumerable});return i};var g=(i,l,s)=>(s=i!=null?P(O(i)):{},C(l||!i||!i.__esModule?b(s,"default",{value:i,enumerable:!0}):s,i)),U=i=>C(b({},"__esModule",{value:!0}),i);var Q={};q(Q,{activate:()=>Y,deactivate:()=>G});module.exports=U(Q);var w=g(require("vscode"));var h=g(require("vscode"));var L=g(require("vscode")),R=g(require("fs")),M=g(require("path"));var y={name:"bad-identation",check(i,l){let s=[],r=l?.indentationSpaces||4,t=i.split(`
-`);for(let n=0;n<t.length;n++){let o=t[n];if(o.trim().length===0)continue;let e=o.match(/^ */)?.[0].length||0;e>0&&e%r!==0&&s.push({rule:"bad-identation",message:`Indentaci\xF3n incorrecta. Se esperaban m\xFAltiplos de ${r} espacios, se encontraron ${e}`,line:n+1,column:e,severity:"warning"})}return s}};var S={name:"unbalanced-parentheses",check(i,l){let s=[],r=i.split(`
-`),t=[];for(let n=0;n<r.length;n++){let o=r[n];for(let e=0;e<o.length;e++){let a=o[e];a==="("?t.push({line:n+1,column:e+1}):a===")"&&(t.length===0?s.push({rule:"unbalanced-parentheses",message:"Par\xE9ntesis de cierre ')' sin apertura correspondiente.",line:n+1,column:e+1,severity:"error"}):t.pop())}}for(let n of t)s.push({rule:"unbalanced-parentheses",message:`Par\xE9ntesis de apertura '(' sin cierre correspondiente. Abierto en l\xEDnea ${n.line}, columna ${n.column}.`,line:n.line,column:n.column,severity:"error"});return s}};var $={name:"unclosed-delimiters",check(i,l){let s=[],r=i.split(`
-`),t=[],n={"[":"]","{":"}"},o={"]":"[","}":"{"};for(let e=0;e<r.length;e++){let a=r[e];for(let u=0;u<a.length;u++){let c=a[u];if(c==="["||c==="{")t.push({type:c,line:e+1,column:u+1});else if(c==="]"||c==="}")if(t.length===0)s.push({rule:"unclosed-delimiters",message:`Delimitador de cierre '${c}' sin apertura correspondiente.`,line:e+1,column:u+1,severity:"error"});else{let f=t[t.length-1],m=n[f.type];c===m?t.pop():s.push({rule:"unclosed-delimiters",message:`Delimitador incorrecto. Se esperaba '${m}' pero se encontr\xF3 '${c}'. Delimitador de apertura '${f.type}' en l\xEDnea ${f.line}, columna ${f.column}.`,line:e+1,column:u+1,severity:"error"})}}}for(let e of t){let a=n[e.type];s.push({rule:"unclosed-delimiters",message:`Delimitador de apertura '${e.type}' sin cierre correspondiente. Se esperaba '${a}'. Abierto en l\xEDnea ${e.line}, columna ${e.column}.`,line:e.line,column:e.column,severity:"error"})}return s}};var k={name:"incomplete-definition",check(i,l){let s=[],r=i.split(`
-`);for(let t=0;t<r.length;t++){let n=r[t],o=n.trim();if(!o||o.startsWith("//")||(n.match(/^ */)?.[0].length||0)>0)continue;let a=o.indexOf("=");if(a!==-1&&o.substring(a+1).trim().length===0){let c=(r[t+1]?.match(/^ */)??[])[0]?.length??0;if(!(t+1<r.length&&r[t+1].trim().length>0&&c>0)){let m=o.match(/^([a-zA-Z_]\w*)\s+/),p=m?m[1]:"funci\xF3n";s.push({rule:"incomplete-definition",message:`Definici\xF3n incompleta de '${p}'. Falta la expresi\xF3n despu\xE9s del '='.`,line:t+1,column:a+1,severity:"error"})}}}return s}};var D={name:"duplicate-definition",check(i,l){let s=[],r=new Map,t=i.split(`
-`);for(let n=0;n<t.length;n++){let o=t[n],e=o.trim();if(!e||e.startsWith("//")||(o.match(/^ */)?.[0].length||0)>0)continue;let u=e.indexOf("=");if(u!==-1){let c=e.substring(0,u).trim();/^[a-zA-Z_]\w*/.test(c)&&(r.has(c)?r.get(c).push(n+1):r.set(c,[n+1]))}}for(let[n,o]of r.entries())if(o.length>1)for(let e=1;e<o.length;e++)s.push({rule:"duplicate-definition",message:`Definici\xF3n duplicada del patr\xF3n '${n}'. Primera definici\xF3n en l\xEDnea ${o[0]}.`,line:o[e],column:0,severity:"error"});return s}};var V=new Set(["if","then","else","where","let","in","otherwise","and","or","not","div","mod","rem","abs","min","max"]),B=new Set(["abs","sign","min","max","gcd","lcm","length","head","tail","reverse","sort","append","take","drop","map","filter","foldl","foldr","zip","unzip","strlen","substr","concat","chars","ord","chr","print","println","read","readln","show","hd","tl","null","not","even","odd","isalpha","isdigit","compose","flip","curry","uncurry","div","mod","rem","pow","sqrt","exp","log","sin","cos","tan","id","const","fst","snd","error","undefined"]),N={name:"undefined-variable",check(i,l){let s=[],r=i.split(`
-`),t=new Set;for(let n of r){let o=n.trim();if(!o||o.startsWith("//")||n.match(/^ /))continue;let e=o.match(/^([a-zA-Z_]\w*)\s*/);e&&o.includes("=")&&t.add(e[1])}for(let n=0;n<r.length;n++){let o=r[n],e=o.trim();if(!e||e.startsWith("//"))continue;let a=e.match(/^([a-zA-Z_]\w*)\s+(.*?)\s*=\s*(.*)/);if(a){let u=a[1],c=a[2],f=a[3],m=new Set;m.add(u);let p=c.split(/\s+/).filter(d=>d.length>0);for(let d of p)/^[a-zA-Z_]\w*$/.test(d)&&m.add(d);let x=/\b([a-zA-Z_]\w*)\b/g,I,v=new Set;for(;(I=x.exec(f))!==null;){let d=I[1];if(v.has(d)||V.has(d)||m.has(d)||t.has(d)||B.has(d)||/^\d+$/.test(d))continue;let Z=o.indexOf(d)+1;s.push({rule:"undefined-variable",message:`Variable no definida '${d}'. Debe ser un par\xE1metro o estar definida en 'where'.`,line:n+1,column:Z,severity:"error"}),v.add(d)}}}return s}};var H=new Set(["abs","sign","min","max","gcd","lcm","length","head","tail","reverse","sort","append","take","drop","map","filter","foldl","foldr","zip","unzip","strlen","substr","concat","chars","ord","chr","print","println","read","readln","show","hd","tl","null","not","even","odd","isalpha","isdigit","compose","flip","curry","uncurry","div","mod","rem","pow","sqrt","exp","log","sin","cos","tan","id","const","fst","snd","error","undefined"]),z={name:"undefined-function",check(i,l){let s=[],r=i.split(`
-`),t=new Set;for(let n of r){let o=n.trim();if(!o||o.startsWith("//")||n.match(/^ /))continue;let e=o.match(/^([a-zA-Z_]\w*)\s*/);e&&o.includes("=")&&t.add(e[1])}for(let n=0;n<r.length;n++){let o=r[n],e=o.trim();if(!e||e.startsWith("//"))continue;let a=/\b([a-zA-Z_]\w*)\b/g,u;for(;(u=a.exec(e))!==null;){let c=u[1],f=u.index;if(!(["if","then","else","where","let","in","otherwise"].includes(c)||["and","or","not","div","mod","rem"].includes(c)||!e.substring(0,f).includes("="))&&!t.has(c)&&!H.has(c)){let p=e.match(/^([a-zA-Z_]\w*)\s+([a-zA-Z_]\w*[\s\w]*)\s*=/);if(p&&p[2].split(/\s+/).includes(c))continue;let x=o.indexOf(c)+1;s.push({rule:"undefined-function",message:`Funci\xF3n no definida '${c}'.`,line:n+1,column:x,severity:"error"})}}}return s}};var J=[y,S,$,k,D,N,z];function K(){try{let i=L.workspace.workspaceFolders?.[0]?.uri.fsPath;if(!i)throw new Error("No workspace folder found");let l=M.join(i,"miralinter.config.json");if(!R.existsSync(l))return A();let s=R.readFileSync(l,"utf-8");return JSON.parse(s)}catch{return A()}}function A(){return{rules:{"bad-identation":{enabled:!0,indentationSpaces:4},"unbalanced-parentheses":{enabled:!0},"unclosed-delimiters":{enabled:!0},"incomplete-definition":{enabled:!0},"duplicate-definition":{enabled:!0},"undefined-variable":{enabled:!0},"undefined-function":{enabled:!0}}}}function _(i){let l=K(),s=[],r=[];for(let t of J){let n=l.rules[t.name];if(n&&!n.enabled)continue;let o=t.check(i,n);o.length===0?s.push(t.name):r.push(...o)}return{passed:s,failed:r}}function E(i){let l=i.passed.length>0?i.passed.join(`
-`):"Ninguna",s=i.failed.length>0?i.failed.map(r=>`[L${r.line}] ${r.message}`).join(`
-`):"Ninguna";L.window.showInformationMessage(`Resultados del Linting Miranda:
+"use strict";
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+// src/extension.ts
+var extension_exports = {};
+__export(extension_exports, {
+  activate: () => activate,
+  deactivate: () => deactivate
+});
+module.exports = __toCommonJS(extension_exports);
+var vscode3 = __toESM(require("vscode"));
+
+// src/commands.ts
+var vscode2 = __toESM(require("vscode"));
+
+// src/mirandaLinter.ts
+var vscode = __toESM(require("vscode"));
+var fs = __toESM(require("fs"));
+var path = __toESM(require("path"));
+
+// src/rules/BadIdentationRule.ts
+var badIndentationRule = {
+  name: "bad-identation",
+  check(code, config) {
+    const issues = [];
+    const expectedSpaces = config?.indentationSpaces || 4;
+    const lines = code.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (line.trim().length === 0) {
+        continue;
+      }
+      const leadingSpaces = line.match(/^ */)?.[0].length || 0;
+      if (leadingSpaces > 0 && leadingSpaces % expectedSpaces !== 0) {
+        issues.push({
+          rule: "bad-identation",
+          message: `Indentaci\xF3n incorrecta. Se esperaban m\xFAltiplos de ${expectedSpaces} espacios, se encontraron ${leadingSpaces}`,
+          line: i + 1,
+          column: leadingSpaces,
+          severity: "warning"
+        });
+      }
+    }
+    return issues;
+  }
+};
+
+// src/rules/UnbalancedParenthesesRule.ts
+var unbalancedParenthesesRule = {
+  name: "unbalanced-parentheses",
+  check(code, config) {
+    const issues = [];
+    const lines = code.split("\n");
+    const stack = [];
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      for (let j = 0; j < line.length; j++) {
+        const char = line[j];
+        if (char === "(") {
+          stack.push({ line: i + 1, column: j + 1 });
+        } else if (char === ")") {
+          if (stack.length === 0) {
+            issues.push({
+              rule: "unbalanced-parentheses",
+              message: `Par\xE9ntesis de cierre ')' sin apertura correspondiente.`,
+              line: i + 1,
+              column: j + 1,
+              severity: "error"
+            });
+          } else {
+            stack.pop();
+          }
+        }
+      }
+    }
+    for (const unclosed of stack) {
+      issues.push({
+        rule: "unbalanced-parentheses",
+        message: `Par\xE9ntesis de apertura '(' sin cierre correspondiente. Abierto en l\xEDnea ${unclosed.line}, columna ${unclosed.column}.`,
+        line: unclosed.line,
+        column: unclosed.column,
+        severity: "error"
+      });
+    }
+    return issues;
+  }
+};
+
+// src/rules/UnclosedDelimitersRule.ts
+var unclosedDelimitersRule = {
+  name: "unclosed-delimiters",
+  check(code, config) {
+    const issues = [];
+    const lines = code.split("\n");
+    const stack = [];
+    const delimiters = {
+      "[": "]",
+      "{": "}"
+    };
+    const closingDelimiters = {
+      "]": "[",
+      "}": "{"
+    };
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      for (let j = 0; j < line.length; j++) {
+        const char = line[j];
+        if (char === "[" || char === "{") {
+          stack.push({ type: char, line: i + 1, column: j + 1 });
+        } else if (char === "]" || char === "}") {
+          if (stack.length === 0) {
+            issues.push({
+              rule: "unclosed-delimiters",
+              message: `Delimitador de cierre '${char}' sin apertura correspondiente.`,
+              line: i + 1,
+              column: j + 1,
+              severity: "error"
+            });
+          } else {
+            const last = stack[stack.length - 1];
+            const expectedClosing = delimiters[last.type];
+            if (char === expectedClosing) {
+              stack.pop();
+            } else {
+              issues.push({
+                rule: "unclosed-delimiters",
+                message: `Delimitador incorrecto. Se esperaba '${expectedClosing}' pero se encontr\xF3 '${char}'. Delimitador de apertura '${last.type}' en l\xEDnea ${last.line}, columna ${last.column}.`,
+                line: i + 1,
+                column: j + 1,
+                severity: "error"
+              });
+            }
+          }
+        }
+      }
+    }
+    for (const unclosed of stack) {
+      const closing = delimiters[unclosed.type];
+      issues.push({
+        rule: "unclosed-delimiters",
+        message: `Delimitador de apertura '${unclosed.type}' sin cierre correspondiente. Se esperaba '${closing}'. Abierto en l\xEDnea ${unclosed.line}, columna ${unclosed.column}.`,
+        line: unclosed.line,
+        column: unclosed.column,
+        severity: "error"
+      });
+    }
+    return issues;
+  }
+};
+
+// src/rules/IncompleteDefinitionRule.ts
+var incompleteDefinitionRule = {
+  name: "incomplete-definition",
+  check(code, config) {
+    const issues = [];
+    const lines = code.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const trimmedLine = line.trim();
+      if (!trimmedLine || trimmedLine.startsWith("//")) {
+        continue;
+      }
+      const leadingSpaces = line.match(/^ */)?.[0].length || 0;
+      if (leadingSpaces > 0) {
+        continue;
+      }
+      const equalsIndex = trimmedLine.indexOf("=");
+      if (equalsIndex !== -1) {
+        const afterEquals = trimmedLine.substring(equalsIndex + 1).trim();
+        if (afterEquals.length === 0) {
+          const nextLineSpaces = (lines[i + 1]?.match(/^ */) ?? [])[0]?.length ?? 0;
+          const hasIndentedContinuation = i + 1 < lines.length && lines[i + 1].trim().length > 0 && nextLineSpaces > 0;
+          if (!hasIndentedContinuation) {
+            const functionMatch = trimmedLine.match(/^([a-zA-Z_]\w*)\s+/);
+            const functionName = functionMatch ? functionMatch[1] : "funci\xF3n";
+            issues.push({
+              rule: "incomplete-definition",
+              message: `Definici\xF3n incompleta de '${functionName}'. Falta la expresi\xF3n despu\xE9s del '='.`,
+              line: i + 1,
+              column: equalsIndex + 1,
+              severity: "error"
+            });
+          }
+        }
+      }
+    }
+    return issues;
+  }
+};
+
+// src/rules/DuplicateDefinitionRule.ts
+var duplicateDefinitionRule = {
+  name: "duplicate-definition",
+  check(code, config) {
+    const issues = [];
+    const definedPatterns = /* @__PURE__ */ new Map();
+    const lines = code.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const trimmedLine = line.trim();
+      if (!trimmedLine || trimmedLine.startsWith("//")) {
+        continue;
+      }
+      const leadingSpaces = line.match(/^ */)?.[0].length || 0;
+      if (leadingSpaces > 0) {
+        continue;
+      }
+      const equalsIndex = trimmedLine.indexOf("=");
+      if (equalsIndex !== -1) {
+        const pattern = trimmedLine.substring(0, equalsIndex).trim();
+        if (/^[a-zA-Z_]\w*/.test(pattern)) {
+          if (!definedPatterns.has(pattern)) {
+            definedPatterns.set(pattern, [i + 1]);
+          } else {
+            definedPatterns.get(pattern).push(i + 1);
+          }
+        }
+      }
+    }
+    for (const [pattern, lineNumbers] of definedPatterns.entries()) {
+      if (lineNumbers.length > 1) {
+        for (let j = 1; j < lineNumbers.length; j++) {
+          issues.push({
+            rule: "duplicate-definition",
+            message: `Definici\xF3n duplicada del patr\xF3n '${pattern}'. Primera definici\xF3n en l\xEDnea ${lineNumbers[0]}.`,
+            line: lineNumbers[j],
+            column: 0,
+            severity: "error"
+          });
+        }
+      }
+    }
+    return issues;
+  }
+};
+
+// src/rules/UndefinedVariableRule.ts
+var RESERVED_KEYWORDS = /* @__PURE__ */ new Set([
+  "if",
+  "then",
+  "else",
+  "where",
+  "let",
+  "in",
+  "otherwise",
+  "and",
+  "or",
+  "not",
+  "div",
+  "mod",
+  "rem",
+  "abs",
+  "min",
+  "max"
+]);
+var BUILTIN_FUNCTIONS = /* @__PURE__ */ new Set([
+  "abs",
+  "sign",
+  "min",
+  "max",
+  "gcd",
+  "lcm",
+  "length",
+  "head",
+  "tail",
+  "reverse",
+  "sort",
+  "append",
+  "take",
+  "drop",
+  "map",
+  "filter",
+  "foldl",
+  "foldr",
+  "zip",
+  "unzip",
+  "strlen",
+  "substr",
+  "concat",
+  "chars",
+  "ord",
+  "chr",
+  "print",
+  "println",
+  "read",
+  "readln",
+  "show",
+  "hd",
+  "tl",
+  "null",
+  "not",
+  "even",
+  "odd",
+  "isalpha",
+  "isdigit",
+  "compose",
+  "flip",
+  "curry",
+  "uncurry",
+  "div",
+  "mod",
+  "rem",
+  "pow",
+  "sqrt",
+  "exp",
+  "log",
+  "sin",
+  "cos",
+  "tan",
+  "id",
+  "const",
+  "fst",
+  "snd",
+  "error",
+  "undefined"
+]);
+var undefinedVariableRule = {
+  name: "undefined-variable",
+  check(code, config) {
+    const issues = [];
+    const lines = code.split("\n");
+    const definedFunctions = /* @__PURE__ */ new Set();
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("//")) {
+        continue;
+      }
+      if (line.match(/^ /)) {
+        continue;
+      }
+      const defMatch = trimmed.match(/^([a-zA-Z_]\w*)\s*/);
+      if (defMatch && trimmed.includes("=")) {
+        definedFunctions.add(defMatch[1]);
+      }
+    }
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("//")) {
+        continue;
+      }
+      const definitionMatch = trimmed.match(/^([a-zA-Z_]\w*)\s+(.*?)\s*=\s*(.*)/);
+      if (definitionMatch) {
+        const functionName = definitionMatch[1];
+        const paramsString = definitionMatch[2];
+        const expression = definitionMatch[3];
+        const parameters = /* @__PURE__ */ new Set();
+        parameters.add(functionName);
+        const paramTokens = paramsString.split(/\s+/).filter((p) => p.length > 0);
+        for (const param of paramTokens) {
+          if (/^[a-zA-Z_]\w*$/.test(param)) {
+            parameters.add(param);
+          }
+        }
+        const identifierRegex = /\b([a-zA-Z_]\w*)\b/g;
+        let match;
+        const reportedInLine = /* @__PURE__ */ new Set();
+        while ((match = identifierRegex.exec(expression)) !== null) {
+          const identifier = match[1];
+          if (reportedInLine.has(identifier)) {
+            continue;
+          }
+          if (RESERVED_KEYWORDS.has(identifier)) {
+            continue;
+          }
+          if (parameters.has(identifier)) {
+            continue;
+          }
+          if (definedFunctions.has(identifier)) {
+            continue;
+          }
+          if (BUILTIN_FUNCTIONS.has(identifier)) {
+            continue;
+          }
+          if (/^\d+$/.test(identifier)) {
+            continue;
+          }
+          const columnNumber = line.indexOf(identifier) + 1;
+          issues.push({
+            rule: "undefined-variable",
+            message: `Variable no definida '${identifier}'. Debe ser un par\xE1metro o estar definida en 'where'.`,
+            line: i + 1,
+            column: columnNumber,
+            severity: "error"
+          });
+          reportedInLine.add(identifier);
+        }
+      }
+    }
+    return issues;
+  }
+};
+
+// src/rules/UndefinedFunctionRule.ts
+var BUILTIN_FUNCTIONS2 = /* @__PURE__ */ new Set([
+  // Funciones aritméticas
+  "abs",
+  "sign",
+  "min",
+  "max",
+  "gcd",
+  "lcm",
+  // Funciones de listas
+  "length",
+  "head",
+  "tail",
+  "reverse",
+  "sort",
+  "append",
+  "take",
+  "drop",
+  "map",
+  "filter",
+  "foldl",
+  "foldr",
+  "zip",
+  "unzip",
+  // Funciones de strings
+  "strlen",
+  "substr",
+  "concat",
+  "chars",
+  "ord",
+  "chr",
+  // Funciones de entrada/salida
+  "print",
+  "println",
+  "read",
+  "readln",
+  "show",
+  "hd",
+  "tl",
+  // Funciones de tipo
+  "null",
+  "not",
+  "even",
+  "odd",
+  "isalpha",
+  "isdigit",
+  // Funciones de orden superior
+  "compose",
+  "flip",
+  "curry",
+  "uncurry",
+  // Operadores comunes representados como funciones
+  "div",
+  "mod",
+  "rem",
+  "pow",
+  "sqrt",
+  "exp",
+  "log",
+  "sin",
+  "cos",
+  "tan",
+  // Más funciones built-in
+  "id",
+  "const",
+  "fst",
+  "snd",
+  "error",
+  "undefined"
+]);
+var undefinedFunctionRule = {
+  name: "undefined-function",
+  check(code, config) {
+    const issues = [];
+    const lines = code.split("\n");
+    const definedFunctions = /* @__PURE__ */ new Set();
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("//")) {
+        continue;
+      }
+      if (line.match(/^ /)) {
+        continue;
+      }
+      const definitionMatch = trimmed.match(/^([a-zA-Z_]\w*)\s*/);
+      if (definitionMatch && trimmed.includes("=")) {
+        definedFunctions.add(definitionMatch[1]);
+      }
+    }
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("//")) {
+        continue;
+      }
+      const identifierRegex = /\b([a-zA-Z_]\w*)\b/g;
+      let match;
+      while ((match = identifierRegex.exec(trimmed)) !== null) {
+        const identifier = match[1];
+        const position = match.index;
+        if (["if", "then", "else", "where", "let", "in", "otherwise"].includes(identifier)) {
+          continue;
+        }
+        if (["and", "or", "not", "div", "mod", "rem"].includes(identifier)) {
+          continue;
+        }
+        const beforeIdentifier = trimmed.substring(0, position);
+        if (beforeIdentifier.includes("=")) {
+        } else {
+          continue;
+        }
+        if (!definedFunctions.has(identifier) && !BUILTIN_FUNCTIONS2.has(identifier)) {
+          const defMatch = trimmed.match(/^([a-zA-Z_]\w*)\s+([a-zA-Z_]\w*[\s\w]*)\s*=/);
+          if (defMatch) {
+            const params = defMatch[2].split(/\s+/);
+            if (params.includes(identifier)) {
+              continue;
+            }
+          }
+          const columnNumber = line.indexOf(identifier) + 1;
+          issues.push({
+            rule: "undefined-function",
+            message: `Funci\xF3n no definida '${identifier}'.`,
+            line: i + 1,
+            column: columnNumber,
+            severity: "error"
+          });
+        }
+      }
+    }
+    return issues;
+  }
+};
+
+// src/mirandaLinter.ts
+var mirandaRules = [
+  badIndentationRule,
+  unbalancedParenthesesRule,
+  unclosedDelimitersRule,
+  incompleteDefinitionRule,
+  duplicateDefinitionRule,
+  undefinedVariableRule,
+  undefinedFunctionRule
+];
+function loadConfig() {
+  try {
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    if (!workspaceFolder) {
+      throw new Error("No workspace folder found");
+    }
+    const configPath = path.join(workspaceFolder, "miralinter.config.json");
+    if (!fs.existsSync(configPath)) {
+      return getDefaultConfig();
+    }
+    const configContent = fs.readFileSync(configPath, "utf-8");
+    return JSON.parse(configContent);
+  } catch (error) {
+    return getDefaultConfig();
+  }
+}
+function getDefaultConfig() {
+  return {
+    rules: {
+      "bad-identation": { enabled: true, indentationSpaces: 4 },
+      "unbalanced-parentheses": { enabled: true },
+      "unclosed-delimiters": { enabled: true },
+      "incomplete-definition": { enabled: true },
+      "duplicate-definition": { enabled: true },
+      "undefined-variable": { enabled: true },
+      "undefined-function": { enabled: true }
+    }
+  };
+}
+function lintMirandaCode(code) {
+  const config = loadConfig();
+  const passed = [];
+  const failed = [];
+  for (const rule of mirandaRules) {
+    const ruleConfig = config.rules[rule.name];
+    if (ruleConfig && !ruleConfig.enabled) {
+      continue;
+    }
+    const issues = rule.check(code, ruleConfig);
+    if (issues.length === 0) {
+      passed.push(rule.name);
+    } else {
+      failed.push(...issues);
+    }
+  }
+  return {
+    passed,
+    failed
+  };
+}
+function showLintResults(results) {
+  const passedText = results.passed.length > 0 ? results.passed.join("\n") : "Ninguna";
+  const failedText = results.failed.length > 0 ? results.failed.map(
+    (issue) => `[L${issue.line}] ${issue.message}`
+  ).join("\n") : "Ninguna";
+  vscode.window.showInformationMessage(
+    `Resultados del Linting Miranda:
 
 \u2713 Reglas cumplidas:
-${l}
+${passedText}
 
 \u2717 Problemas encontrados:
-${s}`)}function F(i){let l=h.commands.registerCommand("miralinter.lintCode",()=>{let s=h.window.activeTextEditor;if(!s){h.window.showErrorMessage("No hay un archivo abierto para analizar");return}let r=s.document.getText(),t=_(r);E(t)});i.subscriptions.push(l)}function Y(i){console.log('Congratulations, your extension "miralinter" is now active!'),F(i);let l=w.commands.registerCommand("miralinter.helloWorld",()=>{w.window.showInformationMessage("Hello World from Simple Miranda ESLint!")});i.subscriptions.push(l)}function G(){}0&&(module.exports={activate,deactivate});
+${failedText}`
+  );
+}
+
+// src/commands.ts
+function registerLintCommand(context) {
+  const disposable = vscode2.commands.registerCommand("miralinter.lintCode", () => {
+    const editor = vscode2.window.activeTextEditor;
+    if (!editor) {
+      vscode2.window.showErrorMessage("No hay un archivo abierto para analizar");
+      return;
+    }
+    const code = editor.document.getText();
+    const results = lintMirandaCode(code);
+    showLintResults(results);
+  });
+  context.subscriptions.push(disposable);
+}
+
+// src/extension.ts
+function activate(context) {
+  console.log('Congratulations, your extension "miralinter" is now active!');
+  registerLintCommand(context);
+  const disposable = vscode3.commands.registerCommand("miralinter.helloWorld", () => {
+    vscode3.window.showInformationMessage("Hello World from Simple Miranda ESLint!");
+  });
+  context.subscriptions.push(disposable);
+}
+function deactivate() {
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (module.exports = {
+  activate,
+  deactivate
+});
+//# sourceMappingURL=extension.js.map
